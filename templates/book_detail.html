@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load book_extras %}
+
+{% block content %}
+
+<div class="container">
+	<div class="row">
+	<h2>{{ book.title }} - {{ book.author_join }}</h2>
+		<div class="col-sm-9">
+
+		<div class="boxed-container" style="padding: 15px;">
+			<div class="col-sm-4">
+				<div class="" style="text-align: center;">
+					<img src="{{ book.image.url }}" style="width: 250px; height: 262px;" 
+					alt="book-img" class="img-thumbnail book-img">
+					<div class="play-audio play" style="color:#005887;font-size: 20px;">
+						<span>
+						<i id="audio-icon" class="fa fa-play" aria-hidden="true"></i> Play Review
+						</span>
+						<audio id="book_{{ book.id }}" src="{{ book.audio_link.url }}" ></audio>
+					</div>
+				</div>
+			</div>
+
+		
+			<div class="col-sm-6 product-info-list" style="font-size: 20px;">
+			
+					<div>
+						<strong>Author: </strong><span class="detail-book-info">{{ book.author_join }}</span>
+					</div>
+
+					<div style="float: left;">
+					<div style="float: left;"><strong>Rating:&nbsp&nbsp </strong> </div>
+						<div style="float: left;">
+							<div style="float: left;">
+								<i class="fa fa-star" aria-hidden="true" style="color:#FE980F;"></i>
+								<span id="book_rating">{{ overall_rating.rating }}</span><span id="total_rating" style="font-size: 12px;color: #6b6b6b;"> /5</span>
+								<div>
+								<span style="font-size: 10px;float: right;color: #6b6b6b;">{{ overall_rating.rcount }} users</span>
+								</div>
+							</div>
+							<div style="padding-left: 3px;padding-right: 3px; float: left;"> | Your Rating:</div>
+							<div class="rating-ele" style="float: left;" >
+								
+								<div class="star-wrapper" style="cursor: pointer;">
+									<i class="fa fa-star-o star-ele" aria-hidden="true" value="1" style="color:#FE980F;"></i>
+									<i class="fa fa-star-o star-ele" aria-hidden="true" value="2" style="color:#FE980F;"></i>
+									<i class="fa fa-star-o star-ele" aria-hidden="true" value="3" style="color:#FE980F;"></i>
+									<i class="fa fa-star-o star-ele" aria-hidden="true" value="4" style="color:#FE980F;"></i>
+									<i class="fa fa-star-o star-ele" aria-hidden="true" value="5" style="color:#FE980F;"></i>
+								</div>
+							</div>
+						</div>
+						
+					</div>
+
+					
+					<!--<div>
+						<strong>Narrator: </strong><span class="detail-book-info">{{ book.narrator_join }}</span>
+
+					</div>
+					 <div>
+						<strong>Duration: </strong><span class="detail-book-info">{{ book.length }}</span>
+					</div>
+					<div>
+						<strong>Program: </strong><span class="detail-book-info">{{ book.program_format }}</span>
+					</div>
+					<div>
+						<strong>Publisher: </strong><span class="detail-book-info">{{ book.publisher }}</span>
+					</div>	
+					<div>
+						<strong>Release Date: </strong><span class="detail-book-info">{{ book.release_date|date:"F o" }}</span>
+					</div>
+					
+					
+					<div class="detail-book-info-wrap">
+						<strong>Choose Language: </strong>
+						<span class="detail-book-info">
+							<select onchange="callPrice(this)" style="width: 50%">
+								<option value="">--Select--</option>
+								{% for language in language_list %}	
+									<option value="{{ language.id }}">{{ language }}</option>
+								{% endfor %}
+							</select>
+						</span>
+					</div> 
+			
+
+				<div class="paired-buttons">
+					<a href="#" class="btn btn-default buy-book"><i class="fa fa-shopping-cart"></i> Buy</a>
+				</div>
+				<div class="paired-buttons">
+					<a href="#" class="btn btn-default add-to-cart"><i class="fa fa-shopping-cart"></i>Add to cart</a>
+				</div>-->
+				<div style="clear: both;padding: 10px;">
+					
+				</div>
+				<div class="row">
+					<div class="write-review col-md-3 " style="float: left;" >
+							<a class="btn btn-default " href="/reviews/add/{{ book.id }}" role="button"><i class="fa fa-pencil" aria-hidden="true"> Write a review</i></a>
+					</div>
+					<div class="add-cover col-md-3 col-md-offset-3" style="float: left;">
+							<a class="btn btn-default " href="/add-cover/{{ book.id }}" role="button"><i class="fa fa-picture-o" aria-hidden="true"> Add Design</i></a>
+					</div>
+				</div>
+
+
+				
+			</div>
+		</div>
+
+			<div class="col-sm-12">
+				<h3>Book Review</h3>
+				<hr>
+				<p>{{ book.description }}</p>
+				
+			</div>
+		</div>
+	</div>
+
+</div>
+
+
+<script type="text/javascript">
+	var global_rating = 0;
+
+	global_rating = {{ book_rating }}
+
+	//mark ratings
+	markRating();
+
+	// get price data
+	function callPrice(ele){
+		$.ajax({
+			data: {
+				language: $(ele).val(), 
+				csrfmiddlewaretoken: "{{ csrf_token }}"
+			},
+			type: "post",
+			url:"/books/ajax/{{ book.id }}/",
+			success: function(data){
+				processBookPriceData(JSON.parse(data));
+			},
+			error: function(err){
+				console.log("no response");
+			}
+
+		});
+	}
+
+	//parse string or obj to json
+	function get_parsed_json(obj){
+		return JSON.parse(obj);
+	}
+
+	//show price
+	function processBookPriceData(obj){
+
+		var is_sucess = obj.is_sucess;
+		if(is_sucess){
+			
+			
+			var currency_list = get_parsed_json(obj.currency_list);
+			var price_list = get_parsed_json(obj.price_list);
+
+			currency_name = currency_list[0].fields.currency_name;	
+			currency_name_symbol = currency_list[0].fields.currency_symbol;
+			price_tag = price_list[0].fields.price_tag;
+			
+
+			book_id = price_list[0].fields.book;
+			currency_id = price_list[0].fields.currency;
+			language_id  = price_list[0].fields.language;
+			
+			price_option_html = '<div class="price-box-wrapper">'+
+						'<strong>Price: </strong><span class="detail-book-info">'+
+							'<span class="price-box" book-id="'+book_id+'" currency-id="'+currency_id+'" language-id="'+language_id+'" >'+
+								currency_name_symbol+" "+price_tag +
+							'</span>'+
+						'</span>'+
+					'<div>';
+
+			$(".price-box-wrapper").remove();
+			$(price_option_html).insertAfter($(".detail-book-info-wrap"))
+			// $(".product-info-list").append(price_option_html);
+		}else{
+			alert("Something went wrong.");
+		}
+
+
+	}
+
+	
+		$(".play-audio").on("click",function(){
+			if($(this).hasClass("play")){
+				$(this).addClass("pause");
+				$(this).removeClass("play");
+
+				$("#audio-icon").addClass("fa-pause");
+				$("#audio-icon").removeClass("fa-play");
+
+				$("#book_{{ book.id }}")[0].load();
+				$("#book_{{ book.id }}")[0].pause();
+				$("#book_{{ book.id }}")[0].play();
+			}else{
+				$(this).addClass("play");
+				$(this).removeClass("pause");
+
+				$("#audio-icon").removeClass("fa-pause");
+				$("#audio-icon").addClass("fa-play");
+
+				$("#book_{{ book.id }}")[0].pause();
+			}
+			
+
+		});
+
+		$(".open-rating").on("click",function(){
+			$(".rating-ele").slideToggle();
+		})
+
+		
+		// if inside the parent of star then check the stars
+		$(".star-wrapper").on("mouseenter",function(){
+			
+			//initialize all to blank star
+			$star_ele = $(".star-ele");
+			$prevSibling = $star_ele.prevAll(".star-ele");
+			$star_ele.removeClass("fa-star").addClass("fa-star-o");
+			$prevSibling.removeClass("fa-star").addClass("fa-star-o");
+
+			//change the color of the rating image
+			$(".star-ele").on("mouseenter",function(){
+				$prevSibling = $(this).prevAll(".star-ele");
+				$(this).removeClass("fa-star-o").addClass("fa-star");
+				$prevSibling.removeClass("fa-star-o").addClass("fa-star");
+				console.log("mouseenter");
+				console.log(this);
+			});
+			$(".star-ele").on("mouseleave",function(){
+				prevSibling = $(this).prevAll(".star-ele");
+				$(this).removeClass("fa-star").addClass("fa-star-o");
+				$prevSibling.removeClass("fa-star").addClass("fa-star-o");
+			});
+		});
+
+		//if leaving the parent then mark it blank or default checked value
+		$(".star-wrapper").on("mouseleave",function(){
+			markRating();
+		});
+
+		
+		function markRating(){
+
+			if(global_rating!=0){
+				$star_ele = $(".star-ele[value='"+global_rating+"']");
+				$prevSibling = $star_ele.prevAll(".star-ele");
+				$star_ele.removeClass("fa-star-o").addClass("fa-star");
+				$prevSibling.removeClass("fa-star-o").addClass("fa-star");
+			}
+		}
+
+		//get the rating
+		$(".star-ele").on("click",function(){
+			var rating_val = $(this).attr("value");
+			sendRating(rating_val,"{{ book.id }}");
+		});
+
+		// send the rating for the books
+		function sendRating(rating_val,book_id){
+		
+			$.ajax({
+				data: {
+					rating:rating_val,
+					book_id:book_id,
+					csrfmiddlewaretoken: "{{ csrf_token }}"
+				},
+				type: "post",
+				url:"/books/ajax/rating/",
+				success: function(data){
+					processRatingData(JSON.parse(data));
+				},
+				error: function(err){
+					alert("Your current request cant be completed. Please contact your system administrator.");
+				}
+
+			});
+		}
+
+		function processRatingData(obj){
+			var data = obj;
+			var is_success = data['success'];
+
+			if(is_success){
+				rating_data = get_parsed_json(data.book_rating);
+				rating = rating_data[0].fields.rating;
+				global_rating = rating;
+				// $(".star-ele").on("mouseenter",function(){
+				// 	$star_ele = $(".star-ele[value='"+rating+"']");
+				// 	$prevSibling = $star_ele.prevAll(".star-ele");
+				// 	$star_ele.removeClass("fa-star").addClass("fa-star-o");
+				// 	$prevSibling.removeClass("fa-star").addClass("fa-star-o");
+				// });
+				// $(".star-ele").on("mouseleave",function(){
+					// prevSibling = $(this).prevAll(".star-ele");
+					// $(this).removeClass("fa-star").addClass("fa-star-o");
+					// $prevSibling.removeClass("fa-star").addClass("fa-star-o");
+
+				// });
+				
+			}else{
+				// redirect to login
+				window.location.href = "/login/";
+			}
+
+		}
+
+	
+
+</script>
+{% endblock %}
